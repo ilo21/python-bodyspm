@@ -10,6 +10,9 @@ from classdefinitions import Subject, Stimuli
 from datetime import datetime
 import h5py
 from tqdm import tqdm
+import copy
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 ## Data wrangling
@@ -108,8 +111,9 @@ def combine_data(dataloc, subnums, groups=None, save=False, noImages = False):
     """
 
     # NB: replication of code for saving with/without images. TODO: edit to remove repeat code
-
-    filename = dataloc + '/dataset_' + datetime.now().strftime("%d%m%Y-%H%M") + '.h5'
+    h5_file = 'dataset_' + datetime.now().strftime("%d%m%Y-%H%M") + '.h5'
+    # filename = dataloc + '/dataset_' + datetime.now().strftime("%d%m%Y-%H%M") + '.h5'
+    filename = os.path.join(dataloc,h5_file)
     stim = Stimuli(fileloc=dataloc, from_file=True)
     size_onesided = (522, 171)
     size_twosided = (522, 342)
@@ -125,10 +129,24 @@ def combine_data(dataloc, subnums, groups=None, save=False, noImages = False):
     if noImages:
         for j, subnum in tqdm(enumerate(subnums), desc="subjects"):
             temp_sub = Subject(subnum)
-            print(temp_sub)
             temp_sub.read_sub_from_file(dataloc, noImages)
             if sum(all_res['bg']['subid'] == subnum) == 0:
-                all_res['bg'].loc[subnum, 'subid'] = int(subnum)
+                # all_res['bg'].loc[subnum, 'subid'] = int(subnum)
+                # all_res['bg'].loc[subnum, 'subid'] = int(j)
+                # our naming convention was :FB_012 30077
+                subnum_split = subnum.split(" ")
+                # select unique id
+                if len(subnum_split)> 1:
+                    subid = subnum_split[1]
+                else:
+                    print("Unexpected subject filename. Expected: FB_012 30077. Failed to create bg csv file and h5 file")
+                    return
+                try:
+                    all_res['bg'].loc[subnum, 'subid'] = int(subid)
+                except:
+                    print("Unexpected subject filename. Expected: FB_012 30077. Failed to create bg csv file and h5 file")
+                    print(f"Could not create int from {subid}")
+                    return
                 for bgkey, bgvalue in temp_sub.bginfo.items():
                     #if bgkey != 'profession':  # cannot be neatly converted to numeric, excluding for now
                     if not isinstance(bgvalue, str):
@@ -144,21 +162,35 @@ def combine_data(dataloc, subnums, groups=None, save=False, noImages = False):
                         store.create_dataset('groups', data=groups, dtype=dt)
                     for bgkey, bgvalue in all_res['bg'].items():
                         store.create_dataset(bgkey, data=bgvalue.to_numpy(), dtype="int32")
+                        # store.create_dataset(bgkey, data=bgvalue.to_numpy())
                     have_written_bg = True
     else:
         for key in tqdm(stim.all.keys(), desc="bodymap number"):
-            #print(key)
+            # print(key)
             if stim.all[key]['onesided']:
                 data_matrix = np.zeros((len(subnums), size_onesided[0], size_onesided[1]))
             else:
                 data_matrix = np.zeros((len(subnums), size_twosided[0], size_twosided[1]))
             for j, subnum in tqdm(enumerate(subnums), desc="subjects"):
-                #print(subnum)
+                # print(subnum)
                 temp_sub = Subject(subnum)
                 temp_sub.read_sub_from_file(dataloc, noImages)
                 data_matrix[j] = temp_sub.data[key]
                 if sum(all_res['bg']['subid'] == subnum) == 0:
-                    all_res['bg'].loc[subnum, 'subid'] = int(subnum)
+                    # our naming convention was :FB_012 30077
+                    subnum_split = subnum.split(" ")
+                    # select unique id
+                    if len(subnum_split)> 1:
+                        subid = subnum_split[1]
+                    else:
+                        print("Unexpected subject filename. Expected: FB_012 30077. Failed to create bg csv file and h5 file")
+                        return
+                    try:
+                        all_res['bg'].loc[subnum, 'subid'] = int(subid)
+                    except:
+                        print("Unexpected subject filename. Expected: FB_012 30077. Failed to create bg csv file and h5 file")
+                        print(f"Could not create int from {subid}")
+                        return
                     for bgkey, bgvalue in temp_sub.bginfo.items():
                         try:  # some variables cannot be neatly converted to numeric, excluding for now
                             float(bgvalue)
@@ -178,6 +210,7 @@ def combine_data(dataloc, subnums, groups=None, save=False, noImages = False):
                             store.create_dataset('groups', data=groups, dtype=dt)
                         for bgkey, bgvalue in all_res['bg'].items():
                             store.create_dataset(bgkey, data=bgvalue.to_numpy(), dtype="int32")
+                            # store.create_dataset(bgkey, data=bgvalue.to_numpy())
                         have_written_bg = True
     #print("combined all data successfully ")
     return all_res
@@ -236,10 +269,12 @@ def count_pixels_posneg(data, mask=None, threshold=0.007):
     :return: number of coloured pixels per subject
     """
     data = binarize(data, threshold)
-    data_neg = data.copy()
+    # data_neg = data.copy()
+    data_neg = copy.deepcopy(data)
     data_neg[data_neg > 0] = 0
     data_neg = data_neg * -1
-    data_pos = data.copy()
+    # data_pos = data.copy()
+    data_pos = copy.deepcopy(data)
     data_pos[data_pos < 0] = 0
     # sum all cells for each subject
     if mask is None:
@@ -383,7 +418,7 @@ def read_in_mask(file1, file2=None):
     :param file2: Mask to use for the right side, if any
     :return: numpy array of the mask with 1=include, 0=exclude
     """
-    mask_array = io.imread(file1, as_gray=True)
+    mask_array = io.imread(file1, as_gray=False)
     dims = mask_array.shape
     if len(dims) == 3:
         mask_array = mask_array[:, :, 0]
@@ -391,7 +426,7 @@ def read_in_mask(file1, file2=None):
     mask_array = mask_array * -1
     mask_array = mask_array + 1
     if file2 is not None:
-        mask_other_side = io.imread(file2, as_gray=True)
+        mask_other_side = io.imread(file2, as_gray=False)
         dims = mask_other_side.shape
         if len(dims) == 3:
             mask_other_side = mask_other_side[:, :, 0]

@@ -1,4 +1,4 @@
-name: new_kipu
+name: biofeedback_env
 channels:
   - defaults
 dependencies:

@@ -5,15 +5,21 @@ from bodyfunctions import *
 import numpy as np
 import csv
 
-bgdatapath = '/home/bodymaps/subject_background.csv'
-dataloc = '/home/bodymaps/processed/'
-outfilename ='/home/bodymaps/subject_background_with_activations.csv'
+bgdatapath =  r"C:\Path to bg csv file\python_code_testing\subject_background.csv"
+outfilename =r"C:\Path to result csv file\python_code_testing\subject_background_with_activations.csv"
 
-maskloc = '/repository_location/sample_data/'
-datafile = get_latest_datafile(dataloc)
+maskloc =  r"C:\Path to mask\sample_data"
+# patients
+datafile =r"C:\Path to patients h5 file\python_code_testing\patientdataset.h5"
+# controls 
+datafile2 =r"C:\Path to controls h5 file\python_code_testing\controldataset.h5"
+# read in the relevant masks
+back_path = os.path.join(maskloc,'mask_back_new.png')
+front_path = os.path.join(maskloc,'mask_front_new.png')
 
-mask_one = read_in_mask(maskloc + 'mask_front_new.png')
-mask_fb = read_in_mask(maskloc + 'mask_front_new.png', maskloc + 'mask_back_new.png')
+mask_fb = read_in_mask(front_path,back_path)
+
+mask_one = read_in_mask(front_path)
 
 stim_names = {'emotions_0': ['sadness', 0], 
               'emotions_1': ['happiness', 0], 
@@ -30,7 +36,7 @@ bg = pd.read_csv(bgdatapath)
 
 
 for j, cond in enumerate(stim_names.keys()):
-    with h5py.File(datafile, 'r') as h:
+    with h5py.File(datafile2, 'r') as h:
         data = h[cond][()]
     if stim_names[cond][1] == 1:
         mask_use = mask_fb
@@ -43,3 +49,4 @@ for j, cond in enumerate(stim_names.keys()):
 
 
 bg.to_csv(outfilename, na_rep='NaN')
+# there should be no negative values

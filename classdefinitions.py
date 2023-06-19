@@ -4,6 +4,7 @@ from cv2 import GaussianBlur
 import simplejson as json
 import matplotlib.pyplot as plt
 import math
+import copy
 
 
 # class to keep the relevant information of each stimulus together
@@ -129,19 +130,24 @@ class Subject:
             print('cannot find file ', data_in)
 
     def write_data(self, fileloc):
-        subdir = fileloc + '/'+str(self.name) +'/'
+        # subdir = fileloc + '/'+str(self.name) +'/'
+        subdir = os.path.join(fileloc,str(self.name))
         if not os.path.exists(subdir):
             os.makedirs(subdir)
         # saving each color map to a separate comma separated file and
         for key, value in self.data.items():
-            datafile = subdir + key + '_as_matrix.csv'
+            matrix_file = key + '_as_matrix.csv'
+            # datafile = subdir + key + '_as_matrix.csv'
+            datafile = os.path.join(subdir,matrix_file)
             self.data_loc.append(datafile)
             np.savetxt(datafile, value, fmt='%.10f', delimiter=',')
         return "done"
 
     def write_sub_to_file(self, fileloc):
         self.write_data(fileloc)
-        filename = fileloc + '/sub_' + str(self.name) + '_info.json'
+        json_file = 'sub_' + str(self.name) + '_info.json'
+        # filename = fileloc + '/sub_' + str(self.name) + '_info.json'
+        filename = os.path.join(fileloc,json_file)
         outdata = self.bginfo.copy()
         outdata['name'] = self.name
         outdata['group'] = self.group
@@ -155,13 +161,17 @@ class Subject:
             return "could not find saved data files for subject " + str(self.name)
         else:
             for file in self.data_loc:
-                filename = file.split('/')[-1]
+                head_tail = os.path.split(file)
+                # filename = file.split('/')[-1]
+                filename = head_tail[-1]
                 data_key = filename.split('_as_matrix')[0]
                 self.data[data_key] = np.loadtxt(file, delimiter=',')
 
     def read_sub_from_file(self, fileloc, noImages=False):
         # subject info from a json file
-        filename = fileloc + '/sub_' + str(self.name) + '_info.json'
+        json_file = 'sub_' + str(self.name) + '_info.json'
+        # filename = fileloc + '/sub_' + str(self.name) + '_info.json'
+        filename = os.path.join(fileloc, json_file)
         with open(filename) as f:
             indata = json.load(f)
         self.group = indata['group']
@@ -176,9 +186,11 @@ class Subject:
     def draw_sub_data(self, stim, fileloc=None, qc=False):
         # edit colormaps in twosided [0,1] and twosided [-1,1] cases
         # make sure non coloured values are white in twosided datas
-        twosided_cmap = plt.get_cmap('Greens')
+        # twosided_cmap = plt.get_cmap('Greens')
+        twosided_cmap = copy.copy(plt.cm.get_cmap("Greens"))
         twosided_cmap.set_under('white', 1.0)
-        onesided_cmap = plt.get_cmap('RdBu_r')
+        # onesided_cmap = plt.get_cmap('RdBu_r')
+        onesided_cmap = copy.copy(plt.cm.get_cmap("RdBu_r"))
         # define grey color to show nan's
         twosided_cmap.set_bad('grey', 0.8)
         onesided_cmap.set_bad('grey', 0.8)
@@ -226,6 +238,7 @@ class Subject:
                 os.makedirs(fileloc_fig)
             filename = fileloc_fig+ '/sub_' + str(self.name) + '_data.png'
             plt.savefig(filename, bbox_inches='tight')
+            plt.close(fig)
         else:
             plt.show()
 

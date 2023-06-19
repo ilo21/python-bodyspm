@@ -12,34 +12,38 @@ import os
 
 
 # where should the output figures be saved to?
-figloc = r"C:\Path to save figures\python_code_testing\Figures"
+figloc = r"C:\Path to save figures\Embody preprocessed intentionally empty\Figures"
 maskloc = r"C:\Path to mask\sample_data"
 
-# combined dataset location location for group 1
-datafile = r"C:\Path to patient h5 file\python_code_testing\patientdataset.h5"
-
-datafile_controls = r"C:\Path to control h5 file\python_code_testing\controldataset.h5"
+# path to patient h5 file
+datafile = r"C:\Path to patient h5 file\Embody preprocessed intentionally empty\dataset_patients.h5"
+# path to control h5 file
+datafile_controls = r"C:\Path to control h5 file\Embody preprocessed intentionally empty\dataset_controls.h5"
 
 # read in the relevant masks
 back_path = os.path.join(maskloc,'mask_back_new.png')
 front_path = os.path.join(maskloc,'mask_front_new.png')
-# mask_fb = read_in_mask(maskloc + 'mask_front_new.png', maskloc + 'mask_back_new.png')
+
 mask_fb = read_in_mask(front_path,back_path)
-# mask_one = read_in_mask(maskloc + 'mask_front_new.png')
+
 mask_one = read_in_mask(front_path)
 
 # which stimuli do we want to analyse? dictionary, with system stimulus name as key and 
 # display name (title for plot) and whether it is twosided (0 for no, 1 for yes) as values
-stim_names = {'emotions_0': ['sadness', 0], 
-              'emotions_1': ['happiness', 0], 
-              'emotions_2': ['anger', 0],
-              'emotions_3': ['surprise', 0], 
-              'emotions_4': ['fear', 0], 
-              'emotions_5': ['disgust', 0],
-              'emotions_6': ['neutral', 0],
-              'sensitivity_0': ['tactile sensitivity', 1],
-              'sensitivity_1': ['nociceptive sensitivity', 1], 
-              'sensitivity_2': ['hedonic sensitivity', 1]}
+stim_names = {'0': ['Inget särskilt (neutral)', 0], 
+              '1': ['Rädsla', 0], 
+              '2': ['Ilska', 0],
+              '3': ['Avsky/äckel', 0], 
+              '4': ['Ledsenhet/Sorg', 0], 
+              '5': ['Glädje', 0],
+              '6': ['Förvåning', 0],
+              '7': ['Kärlek', 0],
+              '8': ['Skam', 0], 
+              '9': ['Avundsjuka', 0],
+              '10': ['Skuld', 0],
+              '11': ['Intresse', 0],
+              '12': ['Impuls att skada dig själv', 0],
+              }
 
 # define colormaps for the plots
 hot = plt.cm.get_cmap('hot', 256)
@@ -51,10 +55,10 @@ newcolors = np.delete(newcolors, np.arange(200, 312, 2), 0)
 
 # make separate plot for each stimulus
 for i, cond in enumerate(stim_names.keys()):
-
+    # patient data
     with h5py.File(datafile, 'r') as h:
         patient = h[cond][()]
-
+    # control data
     with h5py.File(datafile_controls, 'r') as c:
         control = c[cond][()]
 
@@ -124,3 +128,4 @@ for i, cond in enumerate(stim_names.keys()):
     path2save = os.path.join(figloc,cond+'_controls_patients_pixelwise.png')
     plt.savefig(path2save)
     plt.close()
+print("Done")
