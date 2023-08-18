@@ -21,8 +21,4 @@ It is designed to work with data coming from a version of https://version.aalto.
  - easy multiple comparison correction to use with pixel-wise analyses
  - binarise maps to coloured/not coloured
  
-#### Upcoming / planned additions
- - Region of Interest analyses (currently exists as a script, to be converted to a function)
- - correlate two maps with one another / other similarity measure
- - potentially functions for visualising analysis outputs? (currently all except single subject visualisations are done as scripts)
 
