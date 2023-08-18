@@ -435,6 +435,36 @@ def read_in_mask(file1, file2=None):
         mask_other_side = mask_other_side + 1
         mask_array = np.concatenate((mask_array, mask_other_side), axis=1)
     return mask_array
+    
+def read_in_mask_modified(file1, file2=None):
+    """
+    Easily read in a black and white mask image and change to binary numpy array to use in other functions.
+    If the data need left and right mask separately, please provide the mask to use on the left-hand side as the
+    first argument.
+
+    :param file1: Black-and-white mask image, where black shows areas inside the mask (i.e. to be included) and white
+    shows areas outside of the mask (i.e. background).
+    :param file2: Mask to use for the right side, if any
+    :return: numpy array of the mask with 1=include, 0=exclude
+    """
+    mask_array = io.imread(file1, as_gray=False)
+    dims = mask_array.shape
+    if len(dims) == 3:
+        mask_array = mask_array[:, :, 0]
+    mask_array = mask_array/255 # to get only zeros and ones
+    mask_array[mask_array < 1] = 0
+    mask_array = mask_array * -1
+    mask_array = mask_array + 1
+    if file2 is not None:
+        mask_other_side = io.imread(file2, as_gray=False)
+        dims = mask_other_side.shape
+        if len(dims) == 3:
+            mask_other_side = mask_other_side[:, :, 0]
+        mask_other_side[mask_other_side < 1] = 0
+        mask_other_side = mask_other_side * -1
+        mask_other_side = mask_other_side + 1
+        mask_array = np.concatenate((mask_array, mask_other_side), axis=1)
+    return mask_array
 
 
 def p_adj_maps(pval_map, mask=None, alpha = 0.05, method='fdr_bh'):

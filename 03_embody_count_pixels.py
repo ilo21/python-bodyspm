@@ -22,7 +22,7 @@ datafile2 = r"C:\Path to patients h5 file\Embody preprocessed intentionally empt
 # read in the relevant masks
 front_path = os.path.join(maskloc,'mask_front_new.png')
 # mask_one = read_in_mask(maskloc + 'mask_front_new.png')
-mask_one = read_in_mask(front_path)
+mask_one = read_in_mask_modified(front_path)
 
 # which stimuli do we want to analyse? dictionary, with system stimulus name as key and 
 # display name (title for plot) and whether it is twosided (0 for no, 1 for yes) as values
